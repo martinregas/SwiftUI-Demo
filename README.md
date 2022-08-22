@@ -1,4 +1,4 @@
-# swiftui-demo
+# SwiftUI-demo
 
 SwiftUI-demo for iPhone is a project that shows iconic quotes from The Simpsons, developed in order to test my knowledge in SwiftUI.
 
