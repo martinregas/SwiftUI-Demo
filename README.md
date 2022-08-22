@@ -14,3 +14,5 @@ https://github.com/lorenzofiamingo/swiftui-cached-async-image
 ### About
 
 Developed by Martin Regas (ARG) - August 2022.
+
+<img src="Screenshots/Screenshot1.png" height="400" alt="Screenshot"/> <img src="Screenshots/Screenshot2.png" height="400" alt="Screenshot"/>
