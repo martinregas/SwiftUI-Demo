@@ -18,7 +18,10 @@ struct FavoriteQuotesListView: View {
 
             if !favoriteQuotesManager.quotes.isEmpty {
                 SearchBar(textToSearch: $textToSearch, rightBtnImage: .init(systemName: "arrow.up.arrow.down"), rightBtnTapped: {
-                    editMode?.wrappedValue = editMode?.wrappedValue.isEditing ?? false ? .inactive : .active
+                    guard let editMode = editMode else { return }
+                    withAnimation(.easeOut(duration: 0.2), {
+                        editMode.wrappedValue = editMode.wrappedValue.isEditing ? .inactive : .active
+                    })
                 })
                                                                 
                 let filteredQuotes = favoriteQuotesManager.quotesByCharacter(character: textToSearch)
