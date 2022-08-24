@@ -37,7 +37,8 @@ class NetworkManager: ObservableObject {
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             Task { @MainActor in
-                charQuotes = try JSONDecoder().decode([CharQuote].self, from: data)
+                let charQuotes = try JSONDecoder().decode([CharQuote].self, from: data)
+                self.charQuotes.insert(contentsOf: charQuotes, at: 0)
                 state = charQuotes.isEmpty ? .notFound : .idle
             }
         } catch {

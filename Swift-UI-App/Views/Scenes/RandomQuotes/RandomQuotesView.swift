@@ -38,14 +38,15 @@ struct RandomQuotesView: View {
                     if skippingQuote {
                         return
                     }
-                    
-                    AnimationHandler().animate(duration: 0.75) {
+
+                    withAnimation(.easeOut(duration: 1), {
                         skippingQuote.toggle()
-                    } completion: {
+                    })
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         next()
                         skippingQuote.toggle()
                     }
-                    
                 })
                 .buttonStyle(RoundedButton())
                 
@@ -59,9 +60,11 @@ struct RandomQuotesView: View {
                         return
                     }
                     
-                    AnimationHandler().animate(duration: 0.5) {
+                    withAnimation(.easeOut(duration: 0.5), {
                         addingToFavorites.toggle()
-                    } completion: {
+                    })
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         guard let quote = networkManager.charQuotes.last else { return }
                         favoriteQuotesManager.addQuote(charQuote: quote)
                         next()
@@ -85,8 +88,8 @@ struct RandomQuotesView: View {
             Button("NO, I CHANGED MY MIND.", role: .cancel) { }
         }
         .ignoresSafeArea(.keyboard)
-        .task {
-            try? await networkManager.request(character: textToSearch)
+        .onAppear {
+            getQuotes()
         }
     }
     
@@ -113,7 +116,7 @@ struct RandomQuotesView: View {
                 if charQuote.id == networkManager.charQuotes.last?.id {
                     
                     CharQuoteView(charQuote: charQuote)
-                        .offset(x: skippingQuote ? -UIScreen.main.bounds.width*1.6 : 0)
+                        .offset(x: skippingQuote ? -UIScreen.main.bounds.height : 0)
                         .rotationEffect( skippingQuote ? .degrees(Double(-50)) : .degrees(0))
                     
                         .scaleEffect(addingToFavorites ? 0.1 : 1)
@@ -135,23 +138,25 @@ struct RandomQuotesView: View {
         currentQuoteIsFavorite = favoriteQuotesManager.checkIsFavorite(charQuote: currentCharQuote)
     }
     
+    func next() {
+        getQuotes()
+        
+        if !networkManager.charQuotes.isEmpty {
+            networkManager.charQuotes.removeLast()
+        }
+    }
+    
     func getQuotes(reset:Bool = false) {
         if reset {
             networkManager.charQuotes.removeAll()
         }
         
-        Task {
-            try? await networkManager.request(character: textToSearch)
-        }
-    }
-    
-    func next() {
-        if networkManager.charQuotes.count <= 5 {
-            getQuotes()
+        if networkManager.charQuotes.count > 5 {
+            return
         }
         
-        if !networkManager.charQuotes.isEmpty {
-            networkManager.charQuotes.removeLast()
+        Task {
+            try? await networkManager.request(character: textToSearch)
         }
     }
 }
