@@ -8,7 +8,7 @@
 import SwiftUI
 
 extension RandomQuotesView {
-    class Observed: ObservableObject {
+    @MainActor class Observed: ObservableObject {
         @Published var charQuotes = [CharQuote]()
         @Published var quotesNotFound = false
         @Published var isLoading = false
