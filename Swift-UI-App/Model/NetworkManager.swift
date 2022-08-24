@@ -7,8 +7,25 @@
 
 import Foundation
 
-class NetworkManager {
-    func request(character:String, completion: @escaping([CharQuote]) -> ()) {
+enum LoadingState {
+    case idle
+    case loading
+    case notFound
+}
+
+class NetworkManager: ObservableObject {
+    @Published var charQuotes: [CharQuote] = []
+    @Published var state: LoadingState = .idle
+    
+    func request(character:String) async throws {
+        if state == .loading {
+            return
+        }
+        
+        if charQuotes.isEmpty {
+            state = .loading
+        }
+        
         var characterParam = ""
         
         if !character.isEmpty {
@@ -16,24 +33,15 @@ class NetworkManager {
         }
         
         guard let url = URL(string: "https://thesimpsonsquoteapi.glitch.me/quotes?count=10\(characterParam)") else { return }
-        let request = URLRequest(url: url)
         
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            guard let data = data, error == nil else { return }
-            let str = String(decoding: data, as: UTF8.self)
-            print(str)
-            do {
-                let response = try JSONDecoder().decode([CharQuote].self, from: data)
-           
-                DispatchQueue.main.async {
-                    completion(response)
-                }
-            } catch(let error) {
-                DispatchQueue.main.async {
-                    print(error)
-                }
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            Task { @MainActor in
+                charQuotes = try JSONDecoder().decode([CharQuote].self, from: data)
+                state = charQuotes.isEmpty ? .notFound : .idle
             }
-            
-        }.resume()
+        } catch {
+            state = .notFound
+        }
     }
 }

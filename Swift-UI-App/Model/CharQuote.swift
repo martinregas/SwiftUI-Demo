@@ -15,7 +15,6 @@ struct CharQuote: Codable, Identifiable {
     var characterDirection: String
     
     private enum CodingKeys: String, CodingKey { case quote, image, character, characterDirection }
-
 }
 
 extension CharQuote: Equatable {
