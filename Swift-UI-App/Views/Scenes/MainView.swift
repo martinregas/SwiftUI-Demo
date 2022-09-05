@@ -16,7 +16,7 @@ struct MainView: View {
                     Label("Random", systemImage: "house")
                         .foregroundColor(.white)
                 }
-                .environmentObject(NetworkManager())
+                .environmentObject(CharQuotesManager())
 
             FavoriteQuotesListView()
                 .tabItem {

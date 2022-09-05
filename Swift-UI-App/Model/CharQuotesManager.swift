@@ -1,5 +1,5 @@
 //
-//  NetworkManager.swift
+//  CharQuotesManager.swift
 //  Swift-UI-App
 //
 //  Created by Martin Regas on 14/08/2022.
@@ -9,22 +9,22 @@ import Foundation
 
 enum LoadingState {
     case idle
-    case loading
     case notFound
+    case loading
+    case empty
 }
 
-class NetworkManager: ObservableObject {
+class CharQuotesManager: ObservableObject {
     @Published var charQuotes: [CharQuote] = []
     @Published var state: LoadingState = .idle
-    
+
     func request(character:String) async throws {
-        if state == .loading {
+        if state == .loading || state == .empty {
+            if charQuotes.isEmpty { state = .empty }
             return
         }
-        
-        if charQuotes.isEmpty {
-            state = .loading
-        }
+ 
+        state = charQuotes.isEmpty ? .empty : .loading
         
         var characterParam = ""
         
@@ -38,7 +38,11 @@ class NetworkManager: ObservableObject {
             let (data, _) = try await URLSession.shared.data(from: url)
             Task { @MainActor in
                 let charQuotes = try JSONDecoder().decode([CharQuote].self, from: data)
-                self.charQuotes.insert(contentsOf: charQuotes, at: 0)
+                for charQuote in charQuotes {
+                    if !self.charQuotes.contains(charQuote) {
+                        self.charQuotes.insert(charQuote, at: 0)
+                    }
+                }
                 state = charQuotes.isEmpty ? .notFound : .idle
             }
         } catch {

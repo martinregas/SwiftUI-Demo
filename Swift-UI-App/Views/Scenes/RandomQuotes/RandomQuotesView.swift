@@ -15,7 +15,7 @@ struct RandomQuotesView: View {
     @State var currentQuoteIsFavorite: Bool = false
     
     @EnvironmentObject private var favoriteQuotesManager: FavoriteQuotesManager
-    @EnvironmentObject var networkManager: NetworkManager
+    @EnvironmentObject var charQuotesManager: CharQuotesManager
     
     var body: some View {
         VStack {
@@ -25,9 +25,9 @@ struct RandomQuotesView: View {
             
             Spacer()
 
-            switch networkManager.state {
-            case .idle: quotesListView
-            case .loading: spinnerView
+            switch charQuotesManager.state {
+            case .idle, .loading: quotesListView
+            case .empty: spinnerView
             case .notFound: errorInformationView
             }
             
@@ -65,7 +65,7 @@ struct RandomQuotesView: View {
                     })
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        guard let quote = networkManager.charQuotes.last else { return }
+                        guard let quote = charQuotesManager.charQuotes.last else { return }
                         favoriteQuotesManager.addQuote(charQuote: quote)
                         next()
                         addingToFavorites.toggle()
@@ -73,7 +73,7 @@ struct RandomQuotesView: View {
                 })
                 .buttonStyle(RoundedButton(backgroundColor: currentQuoteIsFavorite ? .red : .white))
             }
-            .disabled($networkManager.charQuotes.isEmpty)
+            .disabled($charQuotesManager.charQuotes.isEmpty)
             .padding(50)
         }
         .onChange(of: favoriteQuotesManager.quotes) { _ in
@@ -82,7 +82,7 @@ struct RandomQuotesView: View {
         .background(Colors.primary)
         .alert("Are you sure you want to remove this quote from your favorites list?", isPresented: $showAlert) {
             Button("YES!, REMOVE IT.") {
-                guard let quote = networkManager.charQuotes.last else { return }
+                guard let quote = charQuotesManager.charQuotes.last else { return }
                 favoriteQuotesManager.removeQuote(charQuote: quote)
             }
             Button("NO, I CHANGED MY MIND.", role: .cancel) { }
@@ -112,8 +112,8 @@ struct RandomQuotesView: View {
     
     var quotesListView: some View {
         ZStack {
-            ForEach($networkManager.charQuotes, id: \.id) { charQuote in
-                if charQuote.id == networkManager.charQuotes.last?.id {
+            ForEach($charQuotesManager.charQuotes, id: \.id) { charQuote in
+                if charQuote.id == charQuotesManager.charQuotes.last?.id {
                     
                     CharQuoteView(charQuote: charQuote)
                         .offset(x: skippingQuote ? -UIScreen.main.bounds.height : 0)
@@ -134,29 +134,27 @@ struct RandomQuotesView: View {
     }
     
     func checkIfCurrentQuoteIsFavorite() {
-        guard let currentCharQuote = networkManager.charQuotes.last else { return }
+        guard let currentCharQuote = charQuotesManager.charQuotes.last else { return }
         currentQuoteIsFavorite = favoriteQuotesManager.checkIsFavorite(charQuote: currentCharQuote)
     }
     
     func next() {
-        getQuotes()
-        
-        if !networkManager.charQuotes.isEmpty {
-            networkManager.charQuotes.removeLast()
+        if !charQuotesManager.charQuotes.isEmpty {
+            charQuotesManager.charQuotes.removeLast()
+        }
+                
+        if charQuotesManager.charQuotes.count <= 5 {
+            getQuotes()
         }
     }
     
     func getQuotes(reset:Bool = false) {
         if reset {
-            networkManager.charQuotes.removeAll()
-        }
-        
-        if networkManager.charQuotes.count > 5 {
-            return
+            charQuotesManager.charQuotes.removeAll()
         }
         
         Task {
-            try? await networkManager.request(character: textToSearch)
+            try? await charQuotesManager.request(character: textToSearch)
         }
     }
 }
